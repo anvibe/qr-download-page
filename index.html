@@ -231,23 +231,6 @@
             padding-left: 24px;
         }
 
-        /* Debug Information */
-        .debug {
-            margin-top: 24px;
-            padding: 16px;
-            background: #f1f5f9;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 12px;
-            color: #475569;
-            line-height: 1.4;
-        }
-
-        .debug strong {
-            color: #0f172a;
-        }
-
         /* Responsive Design */
         @media (max-width: 480px) {
             .container {
@@ -325,14 +308,6 @@
         const fileType = urlParams.get('type');
         const downloadUrl = urlParams.get('downloadUrl');
 
-        // Debug: Log all parameters
-        console.log('URL Parameters:', {
-            file: fileName,
-            size: fileSize,
-            type: fileType,
-            downloadUrl: downloadUrl
-        });
-
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -354,8 +329,6 @@
                     document.body.removeChild(link);
 
                     showSuccess();
-
-                    console.log('Download started for:', fileName, 'from:', downloadUrl);
                 } catch (error) {
                     console.error('Download failed:', error);
                     window.open(downloadUrl, '_blank');
@@ -406,26 +379,9 @@
                     <button class="download-btn" onclick="handleDownload()">
                         📥 Download File
                     </button>
-                    <div class="debug">
-                        <strong>Debug Info:</strong><br>
-                        File: ${fileName}<br>
-                        Size: ${fileSize}<br>
-                        Type: ${fileType}<br>
-                        Download URL: ${downloadUrl}
-                    </div>
                 `;
             } else {
                 showError('This QR code doesn\'t contain valid file information. Please scan a valid QR code from your email.');
-                content.innerHTML += `
-                    <div class="debug">
-                        <strong>Debug Info:</strong><br>
-                        File: ${fileName || 'null'}<br>
-                        Size: ${fileSize || 'null'}<br>
-                        Type: ${fileType || 'null'}<br>
-                        Download URL: ${downloadUrl || 'null'}<br>
-                        Full URL: ${window.location.href}
-                    </div>
-                `;
             }
         }
 
