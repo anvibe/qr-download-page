@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>File Download via QR Code</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        .file-name {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            word-break: break-word;
+        }
+        .file-details {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            opacity: 0.8;
+        }
+        .detail-value {
+            font-weight: 600;
+        }
+        .download-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 300px;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .download-btn:active {
+            transform: translateY(0);
+        }
+        .error {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .debug {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            text-align: left;
+        }
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 File Download</h1>
+            <p>Access your files via QR Code</p>
+        </div>
+        
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading file information...</p>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h4>💡 How to use:</h4>
+            <p>1. Scan a QR code from your email</p>
+            <p>2. View file information</p>
+            <p>3. Click download to get your file</p>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileName = urlParams.get('file');
+        const fileSize = urlParams.get('size');
+        const fileType = urlParams.get('type');
+        const downloadUrl = urlParams.get('downloadUrl');
+
+        // Debug: Log all parameters
+        console.log('URL Parameters:', {
+            file: fileName,
+            size: fileSize,
+            type: fileType,
+            downloadUrl: downloadUrl
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function handleDownload() {
+            if (downloadUrl) {
+                try {
+                    // Create a temporary link element to trigger the download
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = fileName || 'file';
+                    link.target = '_blank';
+                    
+                    // Append to body, click, and remove
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Show success message
+                    showSuccess();
+                    
+                    console.log('Download started for:', fileName, 'from:', downloadUrl);
+                } catch (error) {
+                    console.error('Download failed:', error);
+                    // Fallback: open in new tab
+                    window.open(downloadUrl, '_blank');
+                    showSuccess();
+                }
+            } else {
+                showError('No download URL available');
+            }
+        }
+
+        function showSuccess() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="success">
+                    <h3>✅ Download Started!</h3>
+                    <p>Your file "${fileName}" is being downloaded.</p>
+                    <p>If the download doesn't start automatically, check your browser's download folder.</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error">
+                    <h3>⚠️ Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        function displayFileInfo() {
+            const content = document.getElementById('content');
+            
+            if (fileName && downloadUrl) {
+                content.innerHTML = `
+                    <div class="file-name">${fileName}</div>
+                    <div class="file-details">
+                        <div class="detail-row">
+                            <span class="detail-label">File Size:</span>
+                            <span class="detail-value">${formatFileSize(parseInt(fileSize || '0'))}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">File Type:</span>
+                            <span class="detail-value">${fileType || 'Unknown'}</span>
+                        </div>
+                    </div>
+                    <button class="download-btn" onclick="handleDownload()">
+                        📥 Download File
+                    </button>
+                    <div class="debug">
+                        <strong>Debug Info:</strong><br>
+                        File: ${fileName}<br>
+                        Size: ${fileSize}<br>
+                        Type: ${fileType}<br>
+                        Download URL: ${downloadUrl}
+                    </div>
+                `;
+            } else {
+                showError('This QR code doesn\'t contain valid file information. Please scan a valid QR code from your email.');
+                // Show debug info
+                content.innerHTML += `
+                    <div class="debug">
+                        <strong>Debug Info:</strong><br>
+                        File: ${fileName || 'null'}<br>
+                        Size: ${fileSize || 'null'}<br>
+                        Type: ${fileType || 'null'}<br>
+                        Download URL: ${downloadUrl || 'null'}<br>
+                        Full URL: ${window.location.href}
+                    </div>
+                `;
+            }
+        }
+
+        // Display file information when page loads
+        window.addEventListener('load', displayFileInfo);
+    </script>
+</body>
+</html>
