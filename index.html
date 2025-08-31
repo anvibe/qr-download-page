@@ -4,148 +4,311 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>File Download via QR Code</title>
+    <title>3DTransfer - File Download</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        /* CSS Reset and Base Styles */
+        * {
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             min-height: 100vh;
-            color: white;
+            color: #0f172a;
+            line-height: 1.6;
+        }
+
+        /* Container and Layout */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
         }
-        .container {
-            max-width: 500px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
+
+        /* Header Section */
         .header {
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            font-weight: 700;
-        }
-        .file-name {
-            font-size: 1.8em;
-            font-weight: 600;
-            margin-bottom: 20px;
-            word-break: break-word;
-        }
-        .file-details {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-        .detail-label {
-            opacity: 0.8;
-        }
-        .detail-value {
-            font-weight: 600;
-        }
-        .download-btn {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 24px;
+            background: linear-gradient(135deg, #0066FF 0%, #8B5CF6 100%);
+            border-radius: 20px;
             color: white;
-            border: none;
-            padding: 18px 40px;
-            border-radius: 50px;
-            font-size: 1.3em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 300px;
+            box-shadow: 0 20px 25px -5px rgba(0, 102, 255, 0.1), 0 10px 10px -5px rgba(0, 102, 255, 0.04);
         }
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .download-btn:active {
-            transform: translateY(0);
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 500;
         }
-        .error {
-            background: rgba(255, 107, 107, 0.2);
-            border: 1px solid rgba(255, 107, 107, 0.5);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
+
+        /* Content Section */
+        #content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
         }
+
+        /* Loading State */
         .loading {
             text-align: center;
-            padding: 40px;
+            padding: 40px 20px;
         }
+
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
             width: 40px;
             height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #0066FF;
+            border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 16px;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .success {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid rgba(76, 175, 80, 0.5);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
+
+        .loading p {
+            color: #64748b;
+            font-size: 16px;
+            font-weight: 500;
         }
-        .debug {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            font-size: 12px;
-            text-align: left;
+
+        /* File Information Display */
+        .file-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 24px;
+            text-align: center;
+            padding: 16px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
         }
-        .instructions {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
+
+        .file-details {
+            margin-bottom: 32px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #475569;
             font-size: 14px;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            color: #0f172a;
+            font-size: 14px;
+        }
+
+        /* Download Button */
+        .download-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #0066FF 0%, #8B5CF6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 102, 255, 0.2), 0 2px 4px -1px rgba(0, 102, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 102, 255, 0.3), 0 4px 6px -2px rgba(0, 102, 255, 0.2);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Success State */
+        .success {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #10B981;
+            margin-bottom: 16px;
+        }
+
+        .success p {
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        /* Error State */
+        .error {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .error h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #dc2626;
+            margin-bottom: 16px;
+        }
+
+        .error p {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        /* Instructions Section */
+        .instructions {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .instructions h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-left: 24px;
+        }
+
+        /* Debug Information */
+        .debug {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.4;
+        }
+
+        .debug strong {
+            color: #0f172a;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .header {
+                padding: 20px;
+                margin-bottom: 24px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            #content {
+                padding: 24px;
+            }
+            
+            .file-name {
+                font-size: 20px;
+                padding: 12px;
+            }
+            
+            .download-btn {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+        }
+
+        /* Brand Logo Placeholder */
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #0066FF;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="brand-logo">3D</div>
             <h1>📱 File Download</h1>
             <p>Access your files via QR Code</p>
         </div>
-        
+
         <div id="content">
             <div class="loading">
                 <div class="spinner"></div>
                 <p>Loading file information...</p>
             </div>
         </div>
-        
+
         <div class="instructions">
             <h4>💡 How to use:</h4>
             <p>1. Scan a QR code from your email</p>
@@ -181,24 +344,20 @@
         function handleDownload() {
             if (downloadUrl) {
                 try {
-                    // Create a temporary link element to trigger the download
                     const link = document.createElement('a');
                     link.href = downloadUrl;
                     link.download = fileName || 'file';
                     link.target = '_blank';
-                    
-                    // Append to body, click, and remove
+
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    
-                    // Show success message
+
                     showSuccess();
-                    
+
                     console.log('Download started for:', fileName, 'from:', downloadUrl);
                 } catch (error) {
                     console.error('Download failed:', error);
-                    // Fallback: open in new tab
                     window.open(downloadUrl, '_blank');
                     showSuccess();
                 }
@@ -230,7 +389,7 @@
 
         function displayFileInfo() {
             const content = document.getElementById('content');
-            
+
             if (fileName && downloadUrl) {
                 content.innerHTML = `
                     <div class="file-name">${fileName}</div>
@@ -257,7 +416,6 @@
                 `;
             } else {
                 showError('This QR code doesn\'t contain valid file information. Please scan a valid QR code from your email.');
-                // Show debug info
                 content.innerHTML += `
                     <div class="debug">
                         <strong>Debug Info:</strong><br>
@@ -271,7 +429,6 @@
             }
         }
 
-        // Display file information when page loads
         window.addEventListener('load', displayFileInfo);
     </script>
 </body>
