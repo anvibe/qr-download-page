@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Make & Share - File Download</title>
+    <title>Create & Share - File Download</title>
     <style>
         /* CSS Reset and Base Styles */
         * {
@@ -231,6 +231,23 @@
             padding-left: 24px;
         }
 
+        /* Debug Information */
+        .debug {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.4;
+        }
+
+        .debug strong {
+            color: #0f172a;
+        }
+
         /* Responsive Design */
         @media (max-width: 480px) {
             .container {
@@ -308,6 +325,14 @@
         const fileType = urlParams.get('type');
         const downloadUrl = urlParams.get('downloadUrl');
 
+        // Debug: Log all parameters
+        console.log('URL Parameters:', {
+            file: fileName,
+            size: fileSize,
+            type: fileType,
+            downloadUrl: downloadUrl
+        });
+
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -319,20 +344,52 @@
         function handleDownload() {
             if (downloadUrl) {
                 try {
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = fileName || 'file';
-                    link.target = '_blank';
-
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    showSuccess();
+                    console.log('Starting download for:', fileName, 'from:', downloadUrl);
+                    
+                    // Fetch the file first to ensure we can set the filename
+                    fetch(downloadUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            // Create blob URL
+                            const blobUrl = window.URL.createObjectURL(blob);
+                            
+                            // Create download link with original filename
+                            const link = document.createElement('a');
+                            link.href = blobUrl;
+                            link.download = fileName || 'file';
+                            link.style.display = 'none';
+                            
+                            // Append to body, click, and cleanup
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            // Clean up blob URL
+                            window.URL.revokeObjectURL(blobUrl);
+                            
+                            console.log('Download completed for:', fileName);
+                            showSuccess();
+                        })
+                        .catch(error => {
+                            console.error('Download failed:', error);
+                            // Fallback: direct download
+                            const link = document.createElement('a');
+                            link.href = downloadUrl;
+                            link.download = fileName || 'file';
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            showSuccess();
+                        });
                 } catch (error) {
                     console.error('Download failed:', error);
-                    window.open(downloadUrl, '_blank');
-                    showSuccess();
+                    showError('Download failed: ' + error.message);
                 }
             } else {
                 showError('No download URL available');
@@ -379,9 +436,26 @@
                     <button class="download-btn" onclick="handleDownload()">
                         📥 Download File
                     </button>
+                    <div class="debug">
+                        <strong>Debug Info:</strong><br>
+                        File: ${fileName}<br>
+                        Size: ${fileSize}<br>
+                        Type: ${fileType}<br>
+                        Download URL: ${downloadUrl}
+                    </div>
                 `;
             } else {
                 showError('This QR code doesn\'t contain valid file information. Please scan a valid QR code from your email.');
+                content.innerHTML += `
+                    <div class="debug">
+                        <strong>Debug Info:</strong><br>
+                        File: ${fileName || 'null'}<br>
+                        Size: ${fileSize || 'null'}<br>
+                        Type: ${fileType || 'null'}<br>
+                        Download URL: ${downloadUrl || 'null'}<br>
+                        Full URL: ${window.location.href}
+                    </div>
+                `;
             }
         }
 
